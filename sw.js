@@ -12,6 +12,19 @@ const assets = [
     '/img/dish.png',
     '/pages/fallback.html'
 ]
+const limitCacheSize = (name, size) => {
+    caches.open(name).then(cache => {
+        cache.keys().then(keys => {
+            if (keys.length > size) {
+                cache.delete(keys[0]).then(limitCacheSize(name, size))
+            }
+
+        })
+    })
+
+}
+
+
 
 self.addEventListener('install', e => {
 
@@ -44,7 +57,9 @@ self.addEventListener('fetch', evt => {
         caches.match(evt.request).then(cacheRes => {
             return cacheRes || fetch(evt.request).then(fetchRes => {
                 return caches.open(dynamicCache).then(cache => {
+
                     cache.put(evt.request.url, fetchRes.clone())
+                    limitCacheSize(dynamicCache, 15)
                     return fetchRes
                 })
             })
