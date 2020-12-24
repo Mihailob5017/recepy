@@ -1,4 +1,4 @@
-const staticCacheName = 'site-static-v2';
+const staticCacheName = 'site-static-v3';
 const dynamicCache = 'site-dynamic-v1'
 const assets = [
     '/',                // URL route
@@ -9,7 +9,8 @@ const assets = [
     '/css/styles.css',
     'https://fonts.googleapis.com/icon?family=Material+Icons',
     'https://fonts.gstatic.com/s/materialicons/v70/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2',
-    '/img/dish.png'
+    '/img/dish.png',
+    '/pages/fallback.html'
 ]
 
 self.addEventListener('install', e => {
@@ -28,7 +29,7 @@ self.addEventListener('activate', evt => {
 
             return Promise.all(
                 keys
-                    .filter(key => key !== staticCacheName)
+                    .filter(key => key !== staticCacheName && key !== dynamicCache)
                     .map(key => caches.delete(key))
             )
         })
@@ -43,11 +44,13 @@ self.addEventListener('fetch', evt => {
         caches.match(evt.request).then(cacheRes => {
             return cacheRes || fetch(evt.request).then(fetchRes => {
                 return caches.open(dynamicCache).then(cache => {
-                    // const resCopy=fetchRes
                     cache.put(evt.request.url, fetchRes.clone())
                     return fetchRes
                 })
             })
-        })
-    )
+        }).catch(() => {
+            if (evt.request.url.indexOf('.html') !== -1)
+                return caches.match('/pages/fallback.html');
+        }
+        ))
 })
