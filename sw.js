@@ -1,5 +1,5 @@
-const staticCacheName = 'site-static-v3';
-const dynamicCache = 'site-dynamic-v1'
+const staticCacheName = 'site-static-v2';
+const dynamicCache = 'site-dynamic-v2'
 const assets = [
     '/',                // URL route
     '/index.html',      // Files needed
@@ -51,21 +51,21 @@ self.addEventListener('activate', evt => {
 
 
 self.addEventListener('fetch', evt => {
+    if (evt.request.url.indexOf('firestore.googleapis.com') === -1) {
+        evt.respondWith(
+            caches.match(evt.request).then(cacheRes => {
+                return cacheRes || fetch(evt.request).then(fetchRes => {
+                    return caches.open(dynamicCache).then(cache => {
 
-
-    // evt.respondWith(
-    //     caches.match(evt.request).then(cacheRes => {
-    //         return cacheRes || fetch(evt.request).then(fetchRes => {
-    //             return caches.open(dynamicCache).then(cache => {
-
-    //                 cache.put(evt.request.url, fetchRes.clone())
-    //                 limitCacheSize(dynamicCache, 15)
-    //                 return fetchRes
-    //             })
-    //         })
-    //     }).catch(() => {
-    //         if (evt.request.url.indexOf('.html') !== -1)
-    //             return caches.match('/pages/fallback.html');
-    //     }
-    //     ))
+                        cache.put(evt.request.url, fetchRes.clone())
+                        limitCacheSize(dynamicCache, 15)
+                        return fetchRes
+                    })
+                })
+            }).catch(() => {
+                if (evt.request.url.indexOf('.html') !== -1)
+                    return caches.match('/pages/fallback.html');
+            }
+            ))
+    }
 })
